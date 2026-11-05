@@ -1,0 +1,10 @@
+logs/
+sample_logs/
+mlruns/
+mlflow.db
+__pycache__/
+*.csv
+out.txt
+results*.txt
+.git
+.github

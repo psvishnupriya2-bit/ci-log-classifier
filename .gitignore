@@ -1,0 +1,10 @@
+logs/
+sample_logs/
+mlruns/
+mlflow.db
+__pycache__/
+.pytest_cache/
+*.csv
+out.txt
+results*.txt
+.env
