@@ -25,11 +25,11 @@ Live demo: PASTE-YOUR-ONRENDER-LINK-HERE (free server, the first visit can take 
 |---|---|---|---|---|---|
 | TF-IDF + logistic regression | 0.894 | 0.97 | 0.94 | 0.87 | 0.80 |
 | TF-IDF + LightGBM | 0.873 | 0.98 | 0.98 | 0.93 | 0.60 |
-| Small PyTorch network | see MLflow | | | | |
+| Small PyTorch network | 0.925 | 0.99 | 0.98 | 0.95 | 0.78 |
 
 Logs per cause: test_failure 196, other 91, lint_error 30, missing_dependency 11.
 
-Logistic regression is served live: best macro F1, light enough for a free server, and its predictions are easy to explain. The words shown on the page are the TF-IDF weight times the model coefficient. SHAP was used offline (explain_shap.py) to check the explanations.
+Logistic regression is served live. PyTorch scored highest (0.925), but the gap is small on 328 logs, and logistic regression is light enough for a free server and easy to explain. The words shown on the page are the TF-IDF weight times the model coefficient. SHAP was used offline (explain_shap.py) to check the explanations.
 
 ## Honest limits
 
@@ -52,3 +52,4 @@ Open http://127.0.0.1:8000 in a browser. Run the tests with: python -m pytest -q
 ## Tools
 
 Python, Postgres, GitHub API, scikit-learn, LightGBM, PyTorch, MLflow, SHAP, FastAPI, Docker, pytest, GitHub Actions, Render.
+
