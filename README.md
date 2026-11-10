@@ -54,3 +54,7 @@ Open http://127.0.0.1:8000 in a browser. Run the tests with: python -m pytest -q
 Python, Postgres, GitHub API, scikit-learn, LightGBM, PyTorch, MLflow, SHAP, FastAPI, Docker, pytest, GitHub Actions, Render.
 
 
+
+## Hand check of the labels
+
+I labeled 29 logs by hand and the keyword rules agreed with me on 21 of them (72%). Per cause: lint_error 4 of 4, other 6 of 7, test_failure 7 of 9, missing_dependency 4 of 9. The rules often miss dependency conflicts and package downloads that time out. This is a small sample, and I skipped logs whose cause was not visible in the stored lines, so treat 72% as a rough estimate. The model scores above show how well the model reproduces the rule labels, not how well it finds the true cause. Rewriting the missing_dependency rules and labeling more logs is the next improvement.
