@@ -58,3 +58,15 @@ Python, Postgres, GitHub API, scikit-learn, LightGBM, PyTorch, MLflow, SHAP, Fas
 ## Hand check of the labels
 
 I labeled 29 logs by hand and the keyword rules agreed with me on 21 of them (72%). Per cause: lint_error 4 of 4, other 6 of 7, test_failure 7 of 9, missing_dependency 4 of 9. The rules often miss dependency conflicts and package downloads that time out. This is a small sample, and I skipped logs whose cause was not visible in the stored lines, so treat 72% as a rough estimate. The model scores above show how well the model reproduces the rule labels, not how well it finds the true cause. Rewriting the missing_dependency rules and labeling more logs is the next improvement.
+
+## Update: improved labeling rules
+
+The hand check showed the first rules were weakest on missing_dependency (4 of 9 right). Reading the disagreements, I fixed three problems: bot jobs (Dependabot, pull-request checks) were counted as missing_dependency, version conflicts such as "pytest-asyncio requires pytest<10" were missed, and two of my own hand labels were typos.
+
+On the same 29 hand-labeled logs, agreement went from 22 of 29 (76%) to 28 of 29 (97%). This 97% is not a real accuracy, because I wrote the new rules after reading these exact logs. Accuracy on unseen logs is lower, and I have not measured it yet.
+
+After relabeling (test_failure 189, other 108, lint_error 33, missing_dependency 13, timeout 1, network_error 1), I retrained: logistic regression macro F1 0.937 and LightGBM 0.939. These scores use the new labels and cannot be compared with the table above, which uses the old labels. The PyTorch model was not rerun. The live page uses the retrained logistic regression model.
+
+The live missing-package example gives the right cause but only 47% confidence, and its top words include a package name (openblas32) from repeated numpy logs. With 13 training logs for this cause, the model has partly learned that name.
+
+Next step: label about 15 new logs the rules have never seen, to get an honest accuracy.
