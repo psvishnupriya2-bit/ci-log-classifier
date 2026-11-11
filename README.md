@@ -74,3 +74,5 @@ Next step: label about 15 new logs the rules have never seen, to get an honest a
 
 
 
+
+Known weakness: the live Lint error example is the end of a scikit-learn log made mostly of git cleanup lines. The model labels it lint_error with low confidence (36%), partly because it learned some cleanup lines as lint signals. Better lint examples and more lint logs are a next improvement.
