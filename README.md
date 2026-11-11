@@ -2,7 +2,7 @@
 
 When a CI build fails, this project reads the end of the failure log and says why it failed.
 
-Live demo: https://YOUR-LINK.onrender.com (free server, the first visit can take about 50 seconds to wake up)
+Live demo: PASTE_REAL_LINK (free server, the first visit can take about 50 seconds to wake up)
 
 ## What it does
 
@@ -70,4 +70,5 @@ After relabeling (test_failure 189, other 108, lint_error 33, missing_dependency
 The live missing-package example gives the right cause but only 47% confidence, and its top words include a package name (openblas32) from repeated numpy logs. With 13 training logs for this cause, the model has partly learned that name.
 
 Next step: label about 15 new logs the rules have never seen, to get an honest accuracy.
+
 
