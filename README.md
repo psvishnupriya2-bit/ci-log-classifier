@@ -75,4 +75,4 @@ Next step: label about 15 new logs the rules have never seen, to get an honest a
 
 
 
-Known weakness: the live Lint error example is the end of a scikit-learn log made mostly of git cleanup lines. The model labels it lint_error with low confidence (36%), partly because it learned some cleanup lines as lint signals. Better lint examples and more lint logs are a next improvement.
+Known weakness: the lint cause is the least reliable. Only 33 logs are labeled lint_error and many are repeats of the same few jobs. The live Lint error example (a ruff format failure) is classified correctly but with only about 42% confidence, and an isort failure was misclassified as test_failure (39%), possibly because the file path contained the word tests. More and more varied lint logs are the next improvement.
