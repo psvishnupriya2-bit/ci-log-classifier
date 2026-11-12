@@ -5,66 +5,177 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CI Log Classifier</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 820px; margin: 32px auto; padding: 0 16px; color: #1a1a1a; }
-  h1 { margin-bottom: 4px; }
-  p.sub { color: #555; margin-top: 0; }
-  textarea { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 13px; padding: 10px; box-sizing: border-box; }
-  button { padding: 9px 18px; font-size: 15px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
-  button.ex { background: #e5e7eb; color: #111; margin-right: 6px; font-size: 13px; padding: 6px 12px; }
-  #result { margin-top: 20px; display: none; }
-  .cause { font-size: 22px; font-weight: 700; }
-  .bar { background: #e5e7eb; border-radius: 6px; height: 16px; margin: 8px 0; overflow: hidden; }
-  .fill { background: #2563eb; height: 100%; width: 0; }
-  pre { background: #f6f7f9; padding: 10px; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; font-size: 13px; }
-  mark { background: #fde68a; }
-  .chip { display: inline-block; background: #fde68a; border-radius: 12px; padding: 2px 10px; margin: 2px; font-size: 13px; }
+  :root { --bg:#f6f7fb; --card:#ffffff; --text:#1a1a1a; --muted:#5b6472; --line:#e3e6ee; --blue:#2563eb; --mark:#fde68a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1115; --card:#181b22; --text:#eceef2; --muted:#9aa3b2; --line:#2a2f3a; --mark:#7c5e10; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.5; }
+  .wrap { max-width:860px; margin:0 auto; padding:28px 16px 60px; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; }
+  .steps { display:flex; gap:10px; flex-wrap:wrap; margin:0; padding:0; list-style:none; }
+  .steps li { flex:1 1 220px; background:var(--bg); border-radius:8px; padding:10px 12px; font-size:14px; }
+  .steps b { color:var(--blue); }
+  .label { font-weight:600; margin:0 0 8px; }
+  .examples { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text); padding:7px 14px; }
+  button.go { background:var(--blue); color:#fff; border:0; padding:10px 22px; font-size:16px; }
+  button:disabled { opacity:.6; cursor:wait; }
+  textarea { width:100%; height:200px; font-family:Consolas,monospace; font-size:13px; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); white-space:pre; overflow:auto; resize:vertical; }
+  #msg { color:var(--muted); margin:10px 0 0; min-height:22px; }
+  #result { display:none; }
+  .badge { display:inline-block; color:#fff; font-weight:700; font-size:20px; padding:6px 16px; border-radius:999px; }
+  .big { font-size:15px; margin:12px 0 4px; }
+  .bar { background:var(--line); border-radius:8px; height:14px; overflow:hidden; margin:6px 0; }
+  .fill { height:100%; width:0; }
+  .muted { color:var(--muted); font-size:14px; }
+  .chip { display:inline-block; background:var(--mark); border-radius:999px; padding:2px 10px; margin:3px 4px 3px 0; font-size:13px; }
+  mark { background:var(--mark); color:inherit; border-radius:3px; }
+  pre { background:var(--bg); padding:10px; border-radius:8px; overflow:auto; max-height:260px; font-size:13px; margin:6px 0 0; }
+  .row { display:flex; align-items:center; gap:10px; font-size:14px; margin:4px 0; }
+  .row > span:first-child { width:150px; }
+  .row > span:last-child { width:44px; text-align:right; }
+  .mini { flex:1; background:var(--line); border-radius:6px; height:10px; overflow:hidden; }
+  .mini div { height:100%; }
+  h3 { margin:18px 0 4px; font-size:15px; }
 </style>
 </head>
 <body>
-<h1>CI Log Classifier</h1>
-<p class="sub">Paste the last lines of a failed build log and find out why it failed.</p>
-<div>
-  <span>Try an example: </span>
-  <button class="ex" onclick="ex(0)">Test failure</button>
-  <button class="ex" onclick="ex(1)">Missing package</button>
-  <button class="ex" onclick="ex(2)">Lint error</button>
+<div class="wrap">
+  <h1>CI Log Classifier</h1>
+  <p class="sub">A build failed? Paste the end of its log and find out why it failed.</p>
+
+  <div class="card">
+    <ol class="steps">
+      <li><b>1.</b> Paste the last lines of a failed build log (or click an example).</li>
+      <li><b>2.</b> Click <b>Classify my log</b>.</li>
+      <li><b>3.</b> Read the cause, how sure the model is, and what to try next.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <p class="label">Try an example</p>
+    <div class="examples">
+      <button onclick="ex(0)">A test failed</button>
+      <button onclick="ex(1)">A package is missing</button>
+      <button onclick="ex(2)">A style check failed</button>
+    </div>
+    <textarea id="log" wrap="off" placeholder="Paste a failed build log here..."></textarea>
+    <p style="margin:12px 0 0"><button class="go" id="go" onclick="run()">Classify my log</button></p>
+    <p id="msg"></p>
+  </div>
+
+  <div class="card" id="result">
+    <span class="badge" id="badge"></span>
+    <p class="big"><b>What it means:</b> <span id="meaning"></span></p>
+    <p class="big"><b>What to try:</b> <span id="next"></span></p>
+
+    <h3>How sure is the model? <span id="pct"></span></h3>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <p class="muted" id="note"></p>
+
+    <h3>All possible causes</h3>
+    <div id="others"></div>
+
+    <h3>Words in your log that drove the answer</h3>
+    <div id="chips"></div>
+
+    <h3>Your log, with those words highlighted</h3>
+    <pre id="shown"></pre>
+  </div>
+
+  <p class="muted">Learning project: trained on 328 failed logs from 7 open-source projects. It can be wrong, so always check the log yourself.</p>
 </div>
-<p><textarea id="log" placeholder="Paste a failed build log here..."></textarea></p>
-<button onclick="run()">Classify</button>
-<div id="result">
-  <div class="cause" id="cause"></div>
-  <div>Confidence: <span id="conf"></span></div>
-  <div class="bar"><div class="fill" id="fill"></div></div>
-  <p><b>Words that drove the answer:</b> <span id="chips"></span></p>
-  <p><b>Your log, with those words highlighted:</b></p>
-  <pre id="shown"></pre>
-</div>
+
 <script>
+const INFO = {
+  test_failure: { title: "Test failure", color: "#d97706",
+    meaning: "A test in the project failed, so the build was stopped.",
+    next: "Find the line that starts with FAILED or AssertionError in the log. That test shows which code needs fixing." },
+  missing_dependency: { title: "Missing package", color: "#7c3aed",
+    meaning: "A library the project needs could not be found or installed, or its version conflicts with another one.",
+    next: "Look for the package name in the error (for example No matching distribution found). Check its name and version in requirements.txt." },
+  lint_error: { title: "Style / lint error", color: "#0891b2",
+    meaning: "The code may work, but a style or formatting check (like ruff, flake8 or isort) failed.",
+    next: "Run the same tool on your computer (for example ruff format .), commit the changes and push again." },
+  other: { title: "Something else", color: "#6b7280",
+    meaning: "It does not look like a test, package or style problem. It may be a bot job, a network problem or a setup step.",
+    next: "Read the first red error line in the full log. The real cause may be above the part you pasted." }
+};
+
 const EX = [
- "=== FAILURES ===\n___ test_parse_dates ___\n    def test_parse_dates():\n>       assert result == expected\nE       AssertionError: assert 3 == 4\ntests/test_dates.py:42: AssertionError\n=== short test summary info ===\nFAILED tests/test_dates.py::test_parse_dates - AssertionError\n=== 1 failed, 214 passed in 12.40s ===\nProcess completed with exit code 1.",
- "Collecting scipy-openblas32==0.3.34\nERROR: Could not find a version that satisfies the requirement scipy-openblas32==0.3.34 (from versions: 0.3.23, 0.3.24)\nERROR: No matching distribution found for scipy-openblas32==0.3.34\nProcess completed with exit code 1.",
- "Run ruff check .\nsrc/utils.py:10:1: F401 `os` imported but unused\nsrc/utils.py:25:80: E501 Line too long\nFound 2 errors.\nruff failed\nProcess completed with exit code 1."
+  "=== FAILURES ===\n___ test_parse_dates ___\n    def test_parse_dates():\n>       assert result == expected\nE       AssertionError: assert 3 == 4\ntests/test_dates.py:42: AssertionError\n=== short test summary info ===\nFAILED tests/test_dates.py::test_parse_dates - AssertionError\n=== 1 failed, 214 passed in 12.40s ===\nProcess completed with exit code 1.",
+  "Collecting scipy-openblas32==0.3.34\nERROR: Could not find a version that satisfies the requirement scipy-openblas32==0.3.34 (from versions: 0.3.23, 0.3.24)\nERROR: No matching distribution found for scipy-openblas32==0.3.34\nProcess completed with exit code 1.",
+  "ruff check ........ Passed\nruff format ........ Failed\n- hook id: ruff-format\n- files were modified by this hook\n2 files reformatted, 45 files left unchanged\npre-commit hook(s) made changes.\n##[error]Process completed with exit code 1."
 ];
-EX[2] = "ruff check...............................................................Passed\nruff format..............................................................Failed\n- hook id: ruff-format\n- files were modified by this hook\n2 files reformatted, 45 files left unchanged\npre-commit hook(s) made changes.\n##[error]Process completed with exit code 1.";
-function ex(i) { document.getElementById("log").value = EX[i]; run(); }
-function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-async function run() {
-  const log = document.getElementById("log").value;
-  if (!log.trim()) return;
-  const r = await fetch("/classify", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({log}) });
-  const d = await r.json();
-  document.getElementById("result").style.display = "block";
-  document.getElementById("cause").textContent = d.cause.replace("_", " ");
-  document.getElementById("conf").textContent = Math.round(d.confidence * 100) + "%";
-  document.getElementById("fill").style.width = Math.round(d.confidence * 100) + "%";
-  document.getElementById("chips").innerHTML = d.words.map(w => '<span class="chip">' + esc(w) + '</span>').join("") || "none";
-  let html = esc(log.split("\n").slice(-200).join("\n"));
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function level(p) {
+  if (p >= 70) return ["High", "The model is fairly sure."];
+  if (p >= 45) return ["Medium", "The model leans this way but is not certain."];
+  return ["Low", "The model is unsure. Treat this as a hint and read the log yourself."];
+}
+
+function highlight(text, tokens) {
+  if (!tokens.length) return esc(text);
+  const re = new RegExp("\\b(" + tokens.map(escRe).join("|") + ")\\b", "gi");
+  let out = "", last = 0, m;
+  while ((m = re.exec(text))) {
+    out += esc(text.slice(last, m.index)) + "<mark>" + esc(m[0]) + "</mark>";
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
+}
+
+function ex(i) { $("log").value = EX[i]; run(); }
+
+function show(d, log) {
+  const info = INFO[d.cause] || INFO.other;
+  const pct = Math.round(d.confidence * 100);
+  const lv = level(pct);
+  $("result").style.display = "block";
+  $("badge").textContent = info.title;
+  $("badge").style.background = info.color;
+  $("meaning").textContent = info.meaning;
+  $("next").textContent = info.next;
+  $("pct").textContent = pct + "% (" + lv[0] + ")";
+  $("note").textContent = lv[1];
+  $("fill").style.width = pct + "%";
+  $("fill").style.background = info.color;
+  $("chips").innerHTML = d.words.length
+    ? d.words.map(w => '<span class="chip">' + esc(w) + '</span>').join("")
+    : "none";
+  const rows = Object.entries(d.probs).sort((a, b) => b[1] - a[1]);
+  $("others").innerHTML = rows.map(([k, v]) => {
+    const n = INFO[k] || INFO.other;
+    const p = Math.round(v * 100);
+    return '<div class="row"><span>' + esc(n.title) + '</span><div class="mini"><div style="width:' + p +
+           '%;background:' + n.color + '"></div></div><span>' + p + '%</span></div>';
+  }).join("");
   const toks = [...new Set(d.words.join(" ").split(/\s+/).filter(t => t.length >= 3))];
-  toks.forEach(t => {
-    const re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
-    html = html.replace(re, "<mark>$1</mark>");
-  });
-  document.getElementById("shown").innerHTML = html;
+  $("shown").innerHTML = highlight(log.split("\n").slice(-200).join("\n"), toks);
+  $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+async function run() {
+  const log = $("log").value;
+  if (!log.trim()) { $("msg").textContent = "Paste a log first, or click one of the examples."; return; }
+  $("msg").textContent = "Reading your log... (if the server was asleep, the first try can take up to a minute)";
+  $("go").disabled = true;
+  try {
+    const r = await fetch("/classify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ log }) });
+    if (!r.ok) throw new Error("bad status");
+    show(await r.json(), log);
+    $("msg").textContent = "";
+  } catch (e) {
+    $("msg").textContent = "Could not get an answer. Wait a few seconds and click Classify again.";
+  }
+  $("go").disabled = false;
 }
 </script>
 </body>
